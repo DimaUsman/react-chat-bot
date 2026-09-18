@@ -69,7 +69,10 @@ export async function resolveIdentity({ visitorId, login, fullname, firstname })
     ? await upsertUser({ login, fullname, firstname })
     : null;
 
-  if (user) {
+  // Не привязываем гостевые тикеты к аккаунтам support/admin —
+  // иначе обращения гостей «пропадают» из нормального вида inbox
+  // и переписываются на сотрудника при общем visitorId в браузере.
+  if (user && user.role === 'user') {
     await linkVisitorToUser(visitor.id, user.id);
   }
 

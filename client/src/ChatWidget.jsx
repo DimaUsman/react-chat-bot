@@ -364,16 +364,15 @@ export default function ChatWidget({
                   <button
                     key={item.id}
                     type="button"
-                    className={`chat-choice ${item.unanswered ? 'is-alert' : ''}`}
+                    className={`chat-choice ${item.unanswered ? 'is-alert' : ''} ${item.isGuest ? 'is-guest' : ''}`}
                     disabled={busy}
                     onClick={() => pickListItem(item)}
                   >
-                    {item.fullname && (
-                      <strong>
-                        {item.fullname} – {item.login}
-                        {item.dsName ? ` – ${item.dsName}` : ''}
-                      </strong>
-                    )}
+                    <strong>
+                      {item.fullname || (item.isGuest ? 'Гость' : 'Пользователь')}
+                      {item.login ? ` – ${item.login}` : ''}
+                      {item.dsName ? ` – ${item.dsName}` : ''}
+                    </strong>
                     <span>{item.label}</span>
                   </button>
                 ))}

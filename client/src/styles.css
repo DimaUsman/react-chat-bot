@@ -553,11 +553,8 @@ code {
   font-size: 0.9rem;
 }
 
-.chat-choice.is-alert {
-  border-color: #e08a6e;
-  background: linear-gradient(180deg, #e8b5a4 0%, #c45c3a 100%);
-  color: #fff8f5;
-  box-shadow: inset 3px 0 0 #8f2f14, 0 6px 16px rgba(0, 0, 0, 0.28);
+.chat-choice.is-guest {
+  border-style: dashed;
 }
 
 .chat-choice.is-alert strong {

@@ -230,12 +230,18 @@ router.get('/support/inbox', async (req, res, next) => {
     const status = req.query.status === 'closed' ? 'closed' : 'open';
     const items = await listSupportInbox({ status });
     res.json({
-      items: items.map((row) => ({
-        ...formatTicketLabel(row),
-        unanswered: row.last_sender === 'user' && row.status === 'open',
-        fullname: row.fullname,
-        login: row.login,
-      })),
+      items: items.map((row) => {
+        const isGuest = !row.user_id;
+        const ticket = formatTicketLabel(row);
+        return {
+          ...ticket,
+          unanswered: row.last_sender === 'user' && row.status === 'open',
+          isGuest,
+          fullname: row.fullname || (isGuest ? 'Гость' : null),
+          login: row.login || (isGuest ? 'без авторизации' : null),
+          firstname: row.firstname || null,
+        };
+      }),
     });
   } catch (err) {
     next(err);
@@ -244,7 +250,14 @@ router.get('/support/inbox', async (req, res, next) => {
 
 function formatTicketLabel(row) {
   const date = new Date(row.created_at).toLocaleString('ru-RU');
+  const isGuest = !row.user_id;
+  const who = row.login
+    ? [row.fullname || row.firstname, row.login].filter(Boolean).join(' · ')
+    : isGuest
+      ? 'Гость'
+      : null;
   const parts = [
+    who,
     row.first_message || row.title || 'Обращение',
     row.ds_name || null,
     date,
