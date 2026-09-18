@@ -7,13 +7,30 @@ import { buildFlow } from './flow.js';
 export function useBotEngine({ session, context, ready }) {
   const flow = useMemo(
     () => (session ? buildFlow({ session, context }) : null),
-    [session, context],
+    // стабильные поля — иначе новый объект session/context каждый рендер сбрасывает диалог
+    [
+      session?.user?.login,
+      session?.user?.firstname,
+      session?.user?.fullname,
+      session?.user?.role,
+      session?.menu?.canViewReports,
+      session?.menu?.hasOpenSupport,
+      session?.menu?.isSupport,
+      context?.login,
+      context?.firstname,
+      context?.fullname,
+      context?.dsNumber,
+      context?.dsName,
+      context?.actingAsSupport,
+    ],
   );
 
   const [stepId, setStepId] = useState(null);
   const [stack, setStack] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [typing, setTyping] = useState(false);
+  /** Счётчик перезапуска play — нужен, когда stepId уже root, а ленту очистили */
+  const [playEpoch, setPlayEpoch] = useState(0);
   const gen = useRef(0);
   const skipPlayRef = useRef(false);
 
@@ -24,6 +41,7 @@ export function useBotEngine({ session, context, ready }) {
     setStack([]);
     setTimeline([]);
     setStepId(flow.start);
+    setPlayEpoch((n) => n + 1);
   }, [flow]);
 
   // Restart only when host identity / role / report context changes — not on every session refresh
@@ -32,6 +50,7 @@ export function useBotEngine({ session, context, ready }) {
     resetToRoot();
   }, [
     ready,
+    resetToRoot,
     session?.user?.login,
     session?.menu?.isSupport,
     context?.dsNumber,
@@ -40,7 +59,7 @@ export function useBotEngine({ session, context, ready }) {
 
   const step = flow && stepId ? flow.steps[stepId] : null;
 
-  // Animate bot messages when entering a step
+  // Animate bot messages when entering a step / after reset
   useEffect(() => {
     if (!step || !stepId) return undefined;
     if (skipPlayRef.current) {
@@ -56,7 +75,7 @@ export function useBotEngine({ session, context, ready }) {
       for (let i = 0; i < msgs.length; i += 1) {
         if (cancelled || myGen !== gen.current) return;
         setTyping(true);
-        await wait(380 + Math.min(msgs[i].length, 80) * 8);
+        await wait(280 + Math.min(msgs[i].length, 80) * 6);
         if (cancelled || myGen !== gen.current) return;
         setTyping(false);
         setTimeline((t) => [
@@ -77,7 +96,7 @@ export function useBotEngine({ session, context, ready }) {
       cancelled = true;
       setTyping(false);
     };
-  }, [stepId]);
+  }, [stepId, playEpoch, step]);
 
   const pushUser = useCallback((text) => {
     setTimeline((t) => [
@@ -98,6 +117,7 @@ export function useBotEngine({ session, context, ready }) {
       if (userLabel) pushUser(userLabel);
       setStack((s) => [...s, stepId]);
       setStepId(nextId);
+      setPlayEpoch((n) => n + 1);
     },
     [flow, stepId, pushUser],
   );

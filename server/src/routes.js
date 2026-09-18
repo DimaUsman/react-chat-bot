@@ -123,10 +123,19 @@ router.post('/conversations/:id/messages', async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid sender' });
     }
 
-    const message = await addMessage(conversation.id, sender, text.trim());
+    const input = sessionFromBody(req.body);
+    const { user } = await resolveIdentity(input);
+    // Роль из БД важнее клиента: support всегда пишет как support
+    let safeSender = sender;
+    if (user?.role === 'support' || user?.role === 'admin') {
+      safeSender = 'support';
+    } else if (sender === 'support') {
+      safeSender = 'user';
+    }
 
-    if (sender === 'user' && conversation.kind === 'support') {
-      const input = sessionFromBody(req.body);
+    const message = await addMessage(conversation.id, safeSender, text.trim());
+
+    if (safeSender === 'user' && conversation.kind === 'support') {
       void notifyPachcaSupport(
         buildSupportNotifyPayload({
           user: null,

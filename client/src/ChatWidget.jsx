@@ -78,6 +78,12 @@ export default function ChatWidget({
   }, [context.login, context.dsNumber, context.firstname]);
 
   useEffect(() => {
+    if (session?.menu?.isSupport) {
+      onSupportMode?.(true);
+    }
+  }, [session?.menu?.isSupport, onSupportMode]);
+
+  useEffect(() => {
     const el = scrollerRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [bot.timeline, bot.typing, messages, listItems, reports, activeReport, open]);
@@ -194,7 +200,10 @@ export default function ChatWidget({
     setDraft('');
     setBusy(true);
     try {
-      const sender = context.actingAsSupport ? 'support' : 'user';
+      const asSupport = Boolean(
+        context.actingAsSupport || session?.menu?.isSupport,
+      );
+      const sender = asSupport ? 'support' : 'user';
       await api.sendMessage(conversation.id, text, sender);
       const data = await api.getMessages(conversation.id);
       setMessages(data.messages);
@@ -253,6 +262,10 @@ export default function ChatWidget({
     setActiveReport(report);
     bot.go('report_view');
   }
+
+  const asSupport = Boolean(
+    context.actingAsSupport || session?.menu?.isSupport,
+  );
 
   const showChoices =
     bot.step?.choices?.length > 0 &&
@@ -416,7 +429,7 @@ export default function ChatWidget({
                       key={m.id}
                       message={{
                         speaker: m.sender,
-                        authorLabel: liveMeta(m.sender, context.actingAsSupport),
+                        authorLabel: liveMeta(m.sender, asSupport),
                         text: m.text,
                       }}
                       avatarUrl={BOT_AVATAR}
@@ -431,7 +444,7 @@ export default function ChatWidget({
                       setDraft={setDraft}
                       onSubmit={sendLive}
                       placeholder={
-                        context.actingAsSupport
+                        asSupport
                           ? 'Ответ поддержки…'
                           : 'Сообщение в поддержку…'
                       }
@@ -519,9 +532,13 @@ function HeadsetIcon() {
 function Bubble({ message, avatarUrl }) {
   const who = resolveSpeaker(message);
   const text = message?.text ?? '';
+  // Подпись строго от speaker — authorLabel только как подсказка, не перекрывает бота
   const label =
-    message?.authorLabel ||
-    (who === 'bot' ? BOT_NAME : who === 'support' ? 'Поддержка' : 'Вы');
+    who === 'bot'
+      ? BOT_NAME
+      : who === 'support'
+        ? message?.authorLabel || 'Поддержка'
+        : message?.authorLabel || 'Вы';
 
   return (
     <div
