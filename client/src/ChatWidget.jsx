@@ -329,7 +329,7 @@ export default function ChatWidget({
 
             <div className="chat-timeline">
               {bot.timeline.map((m) => (
-                <Bubble key={m.id} from={m.from} text={m.text} avatarUrl={BOT_AVATAR} />
+                <Bubble key={m.id} message={m} avatarUrl={BOT_AVATAR} />
               ))}
               {bot.typing && <TypingIndicator avatarUrl={BOT_AVATAR} />}
             </div>
@@ -414,15 +414,11 @@ export default function ChatWidget({
                   {messages.map((m) => (
                     <Bubble
                       key={m.id}
-                      from={
-                        m.sender === 'support'
-                          ? 'support'
-                          : m.sender === 'bot'
-                            ? 'bot'
-                            : 'user'
-                      }
-                      text={m.text}
-                      meta={liveMeta(m.sender, context.actingAsSupport)}
+                      message={{
+                        speaker: m.sender,
+                        authorLabel: liveMeta(m.sender, context.actingAsSupport),
+                        text: m.text,
+                      }}
                       avatarUrl={BOT_AVATAR}
                     />
                   ))}
@@ -475,19 +471,26 @@ function MessageCloudIcon() {
   );
 }
 
-function Avatar({ from, avatarUrl = DEFAULT_BOT_AVATAR }) {
-  if (from === 'bot') {
-    return <img src={avatarUrl} alt="" className="bubble-avatar bubble-avatar--bot" />;
+function resolveSpeaker(message) {
+  if (!message || typeof message !== 'object') return 'bot';
+  const raw = message.speaker || message.from || message.role || message.sender;
+  if (raw === 'bot' || raw === 'support' || raw === 'user') return raw;
+  return 'bot';
+}
+
+function Avatar({ speaker, avatarUrl = DEFAULT_BOT_AVATAR }) {
+  if (speaker === 'bot') {
+    return <img src={avatarUrl} alt="" className="cb-bubble-avatar cb-bubble-avatar--bot" />;
   }
-  if (from === 'support') {
+  if (speaker === 'support') {
     return (
-      <span className="bubble-avatar bubble-avatar--support" aria-hidden="true">
+      <span className="cb-bubble-avatar cb-bubble-avatar--support" aria-hidden="true">
         <HeadsetIcon />
       </span>
     );
   }
   return (
-    <span className="bubble-avatar bubble-avatar--user" aria-hidden="true">
+    <span className="cb-bubble-avatar cb-bubble-avatar--user" aria-hidden="true">
       <UserIcon />
     </span>
   );
@@ -509,30 +512,39 @@ function HeadsetIcon() {
   );
 }
 
-/** from: bot | support | user — не называть prop `role` (конфликт с HTML role в хостах вроде Luxms). */
-function Bubble({ from, text, meta, avatarUrl }) {
-  const who = from === 'bot' || from === 'support' || from === 'user' ? from : 'bot';
+/**
+ * message: { speaker, authorLabel, text }
+ * Подпись и сторона берутся из объекта message (не из коротких DOM-подобных props).
+ */
+function Bubble({ message, avatarUrl }) {
+  const who = resolveSpeaker(message);
+  const text = message?.text ?? '';
   const label =
-    meta ||
+    message?.authorLabel ||
     (who === 'bot' ? BOT_NAME : who === 'support' ? 'Поддержка' : 'Вы');
 
   return (
-    <div className={`bubble-row bubble-row--${who}`}>
-      {who !== 'user' && <Avatar from={who} avatarUrl={avatarUrl} />}
-      <div className={`bubble bubble--${who}`}>
-        <span className="bubble__meta">{label}</span>
+    <div
+      className={`cb-bubble-row cb-bubble-row--${who}`}
+      data-cb-speaker={who}
+    >
+      {who !== 'user' && <Avatar speaker={who} avatarUrl={avatarUrl} />}
+      <div className={`cb-bubble cb-bubble--${who}`}>
+        <span className="cb-bubble__meta" data-cb-author={label}>
+          {label}
+        </span>
         <p>{text}</p>
       </div>
-      {who === 'user' && <Avatar from="user" />}
+      {who === 'user' && <Avatar speaker="user" />}
     </div>
   );
 }
 
 function TypingIndicator({ avatarUrl }) {
   return (
-    <div className="bubble-row bubble-row--bot">
-      <Avatar from="bot" avatarUrl={avatarUrl} />
-      <div className="bubble bubble--bot bubble--typing" aria-label={`${BOT_NAME} печатает`}>
+    <div className="cb-bubble-row cb-bubble-row--bot" data-cb-speaker="bot">
+      <Avatar speaker="bot" avatarUrl={avatarUrl} />
+      <div className="cb-bubble cb-bubble--bot cb-bubble--typing" aria-label={`${BOT_NAME} печатает`}>
         <span />
         <span />
         <span />

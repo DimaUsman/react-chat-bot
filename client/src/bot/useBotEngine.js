@@ -63,7 +63,8 @@ export function useBotEngine({ session, context, ready }) {
           ...t,
           {
             id: `${stepId}-bot-${i}-${Date.now()}`,
-            from: 'bot',
+            speaker: 'bot',
+            authorLabel: 'КОРОБКО-КОТ',
             text: msgs[i],
             stepId,
           },
@@ -81,7 +82,13 @@ export function useBotEngine({ session, context, ready }) {
   const pushUser = useCallback((text) => {
     setTimeline((t) => [
       ...t,
-      { id: `user-${Date.now()}`, from: 'user', text, stepId },
+      {
+        id: `user-${Date.now()}`,
+        speaker: 'user',
+        authorLabel: 'Вы',
+        text,
+        stepId,
+      },
     ]);
   }, [stepId]);
 
@@ -132,18 +139,18 @@ function wait(ms) {
 
 function trimTimelineToStep(timeline, targetStepId, remainingStack) {
   const allowed = new Set([targetStepId, ...remainingStack]);
-  // Keep messages until (and including) the last bot block of targetStepId
   let lastIdx = -1;
   for (let i = 0; i < timeline.length; i += 1) {
     const m = timeline[i];
-    if (m.from === 'bot' && m.stepId === targetStepId) lastIdx = i;
-    if (m.from === 'user' && allowed.has(m.stepId)) lastIdx = i;
+    const who = m.speaker || m.from || m.role;
+    if (who === 'bot' && m.stepId === targetStepId) lastIdx = i;
+    if (who === 'user' && allowed.has(m.stepId)) lastIdx = i;
   }
   if (lastIdx === -1) {
-    // Fallback: drop trailing user choice + following bots
     let cut = timeline.length;
     for (let i = timeline.length - 1; i >= 0; i -= 1) {
-      if (timeline[i].from === 'user') {
+      const who = timeline[i].speaker || timeline[i].from || timeline[i].role;
+      if (who === 'user') {
         cut = i;
         break;
       }
