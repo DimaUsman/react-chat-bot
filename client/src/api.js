@@ -20,10 +20,19 @@ function joinUrl(base, path) {
 
 export function createApi(context, apiBase = '') {
   const request = async (path, options = {}) => {
-    const res = await fetch(joinUrl(apiBase, `/api${path}`), {
-      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-      ...options,
-    });
+    const url = joinUrl(apiBase, `/api${path}`);
+    let res;
+    try {
+      res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options,
+      });
+    } catch (err) {
+      throw new Error(
+        `Не удалось связаться с API (${url}): ${err.message}. ` +
+          `Проверьте apiBase и CORS_ORIGIN на сервере API.`,
+      );
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || res.statusText);
     return data;

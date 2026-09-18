@@ -147,15 +147,32 @@ docker run -d --name react-chat-bot-admin --restart unless-stopped \
 
 ---
 
-## 4. CORS
+## 4. CORS и LAN (два сервера)
 
-В API сейчас один `CORS_ORIGIN`. Укажите origin системы отчётов, например:
+Браузер грузит Luxms с одного хоста и дергает API на другом — нужен CORS.
+
+Пример: Luxms `http://192.168.235.8`, API `http://192.168.235.11:3001`:
 
 ```env
-CORS_ORIGIN=https://reports.example.com
+# на машине API (.env)
+CORS_ORIGIN=http://192.168.235.8,http://192.168.235.8:80,http://192.168.235.8:8080
+# или временно для отладки в закрытой сети:
+# CORS_ORIGIN=*
 ```
 
-Если нужно несколько origin — напишите, расширим конфиг.
+В виджете:
+
+```tsx
+<ChatWidget apiBase="http://192.168.235.11:3001" context={...} />
+```
+
+Проверка с машины Luxms / с ПК:
+
+```bash
+curl http://192.168.235.11:3001/api/health
+```
+
+Должно вернуть `{"ok":true}`. Если нет — firewall / Docker `-p 3001:3001` / API не слушает сеть.
 
 ---
 

@@ -6,7 +6,13 @@ import routes from './routes.js';
 
 const app = express();
 
-app.use(cors({ origin: config.corsOrigin }));
+const corsOrigin = config.corsOrigin;
+app.use(
+  cors({
+    origin: corsOrigin === '*' ? true : corsOrigin,
+    credentials: true,
+  }),
+);
 app.use(express.json({ limit: '1mb' }));
 app.use('/api', routes);
 
@@ -17,9 +23,13 @@ app.use((err, _req, res, _next) => {
 
 async function start() {
   console.log(`DB target: ${describeDatabaseUrl()}`);
+  const corsLabel = Array.isArray(corsOrigin)
+    ? corsOrigin.join(', ')
+    : String(corsOrigin);
+  console.log(`CORS origin: ${corsLabel}`);
   await migrate();
-  app.listen(config.port, () => {
-    console.log(`API http://localhost:${config.port}`);
+  app.listen(config.port, config.host, () => {
+    console.log(`API http://${config.host}:${config.port}`);
   });
 }
 

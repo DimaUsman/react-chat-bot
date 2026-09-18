@@ -56,13 +56,27 @@ function resolveDatabaseUrl() {
   return 'postgresql://chatbot:chatbot@localhost:5432/chatbot';
 }
 
+function parseCorsOrigins(raw) {
+  const value = String(raw || '').trim();
+  if (!value || value === '*') return '*';
+  const list = value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return list.length <= 1 ? list[0] || 'http://localhost:5173' : list;
+}
+
 export const config = {
   port: Number(process.env.PORT || 3001),
+  // 0.0.0.0 — доступ с других машин в LAN (не только localhost контейнера)
+  host: process.env.HOST || '0.0.0.0',
   databaseUrl: resolveDatabaseUrl(),
   databaseSchema: assertSafeSchemaName(
     process.env.DATABASE_SCHEMA || 'dataoffice_chat_bot',
   ),
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  corsOrigin: parseCorsOrigins(
+    process.env.CORS_ORIGIN || 'http://localhost:5173',
+  ),
   visitorTtlDays: Number(process.env.VISITOR_TTL_DAYS || 14),
   supportLogins: (process.env.SUPPORT_LOGINS || 'support,admin')
     .split(',')
