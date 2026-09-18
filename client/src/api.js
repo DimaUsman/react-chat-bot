@@ -12,8 +12,20 @@ export function clearVisitorId() {
   localStorage.removeItem(VISITOR_KEY);
 }
 
+function normalizeApiBase(base) {
+  const raw = String(base || '').trim();
+  if (!raw) return '';
+  // "/chat-api" — same-origin proxy
+  if (raw.startsWith('/')) return raw.replace(/\/$/, '');
+  // "192.168.x.x:8747" без схемы → браузер ходит на Luxms как на path
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(raw)) {
+    return `http://${raw}`.replace(/\/$/, '');
+  }
+  return raw.replace(/\/$/, '');
+}
+
 function joinUrl(base, path) {
-  const root = (base || '').replace(/\/$/, '');
+  const root = normalizeApiBase(base);
   const suffix = path.startsWith('/') ? path : `/${path}`;
   return `${root}${suffix}`;
 }

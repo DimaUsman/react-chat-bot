@@ -329,7 +329,7 @@ export default function ChatWidget({
 
             <div className="chat-timeline">
               {bot.timeline.map((m) => (
-                <Bubble key={m.id} role={m.role} text={m.text} avatarUrl={BOT_AVATAR} />
+                <Bubble key={m.id} from={m.from} text={m.text} avatarUrl={BOT_AVATAR} />
               ))}
               {bot.typing && <TypingIndicator avatarUrl={BOT_AVATAR} />}
             </div>
@@ -414,7 +414,13 @@ export default function ChatWidget({
                   {messages.map((m) => (
                     <Bubble
                       key={m.id}
-                      role={m.sender === 'support' ? 'support' : m.sender === 'bot' ? 'bot' : 'user'}
+                      from={
+                        m.sender === 'support'
+                          ? 'support'
+                          : m.sender === 'bot'
+                            ? 'bot'
+                            : 'user'
+                      }
                       text={m.text}
                       meta={liveMeta(m.sender, context.actingAsSupport)}
                       avatarUrl={BOT_AVATAR}
@@ -469,11 +475,11 @@ function MessageCloudIcon() {
   );
 }
 
-function Avatar({ role, avatarUrl = DEFAULT_BOT_AVATAR }) {
-  if (role === 'bot') {
+function Avatar({ from, avatarUrl = DEFAULT_BOT_AVATAR }) {
+  if (from === 'bot') {
     return <img src={avatarUrl} alt="" className="bubble-avatar bubble-avatar--bot" />;
   }
-  if (role === 'support') {
+  if (from === 'support') {
     return (
       <span className="bubble-avatar bubble-avatar--support" aria-hidden="true">
         <HeadsetIcon />
@@ -503,19 +509,21 @@ function HeadsetIcon() {
   );
 }
 
-function Bubble({ role, text, meta, avatarUrl }) {
+/** from: bot | support | user — не называть prop `role` (конфликт с HTML role в хостах вроде Luxms). */
+function Bubble({ from, text, meta, avatarUrl }) {
+  const who = from === 'bot' || from === 'support' || from === 'user' ? from : 'bot';
   const label =
     meta ||
-    (role === 'bot' ? BOT_NAME : role === 'support' ? 'Поддержка' : 'Вы');
+    (who === 'bot' ? BOT_NAME : who === 'support' ? 'Поддержка' : 'Вы');
 
   return (
-    <div className={`bubble-row bubble-row--${role}`}>
-      {role !== 'user' && <Avatar role={role} avatarUrl={avatarUrl} />}
-      <div className={`bubble bubble--${role}`}>
+    <div className={`bubble-row bubble-row--${who}`}>
+      {who !== 'user' && <Avatar from={who} avatarUrl={avatarUrl} />}
+      <div className={`bubble bubble--${who}`}>
         <span className="bubble__meta">{label}</span>
         <p>{text}</p>
       </div>
-      {role === 'user' && <Avatar role="user" />}
+      {who === 'user' && <Avatar from="user" />}
     </div>
   );
 }
@@ -523,7 +531,7 @@ function Bubble({ role, text, meta, avatarUrl }) {
 function TypingIndicator({ avatarUrl }) {
   return (
     <div className="bubble-row bubble-row--bot">
-      <Avatar role="bot" avatarUrl={avatarUrl} />
+      <Avatar from="bot" avatarUrl={avatarUrl} />
       <div className="bubble bubble--bot bubble--typing" aria-label={`${BOT_NAME} печатает`}>
         <span />
         <span />

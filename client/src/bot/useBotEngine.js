@@ -63,7 +63,7 @@ export function useBotEngine({ session, context, ready }) {
           ...t,
           {
             id: `${stepId}-bot-${i}-${Date.now()}`,
-            role: 'bot',
+            from: 'bot',
             text: msgs[i],
             stepId,
           },
@@ -81,7 +81,7 @@ export function useBotEngine({ session, context, ready }) {
   const pushUser = useCallback((text) => {
     setTimeline((t) => [
       ...t,
-      { id: `user-${Date.now()}`, role: 'user', text, stepId },
+      { id: `user-${Date.now()}`, from: 'user', text, stepId },
     ]);
   }, [stepId]);
 
@@ -136,14 +136,14 @@ function trimTimelineToStep(timeline, targetStepId, remainingStack) {
   let lastIdx = -1;
   for (let i = 0; i < timeline.length; i += 1) {
     const m = timeline[i];
-    if (m.role === 'bot' && m.stepId === targetStepId) lastIdx = i;
-    if (m.role === 'user' && allowed.has(m.stepId)) lastIdx = i;
+    if (m.from === 'bot' && m.stepId === targetStepId) lastIdx = i;
+    if (m.from === 'user' && allowed.has(m.stepId)) lastIdx = i;
   }
   if (lastIdx === -1) {
     // Fallback: drop trailing user choice + following bots
     let cut = timeline.length;
     for (let i = timeline.length - 1; i >= 0; i -= 1) {
-      if (timeline[i].role === 'user') {
+      if (timeline[i].from === 'user') {
         cut = i;
         break;
       }
