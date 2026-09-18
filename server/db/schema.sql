@@ -3,9 +3,9 @@
 -- =============================================================================
 -- Миграции API/Admin подставляют {{SCHEMA}} из DATABASE_SCHEMA (.env).
 -- Готовый файл для ручного запуска в DBeaver: recreate_schema.sql
+--
+-- gen_random_uuid() — встроен в PostgreSQL ≥ 13 (расширение pgcrypto не нужно).
 -- =============================================================================
-
-CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
 CREATE SCHEMA IF NOT EXISTS {{SCHEMA}};
 

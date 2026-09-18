@@ -7,9 +7,9 @@
 --
 -- Для другой схемы: поменяйте DATABASE_SCHEMA в .env — API/Admin
 -- применяют server/db/schema.sql с подстановкой имени при старте.
+--
+-- gen_random_uuid() — встроен в PostgreSQL ≥ 13 (расширение pgcrypto не нужно).
 -- =============================================================================
-
-CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
 CREATE SCHEMA IF NOT EXISTS dataoffice_chat_bot;
 
