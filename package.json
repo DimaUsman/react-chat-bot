@@ -1,0 +1,18 @@
+{
+  "name": "react-chat-bot",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "api:build": "docker build -f Dockerfile.api -t react-chat-bot-api ./server",
+    "api:up": "docker rm -f react-chat-bot-api 2>nul & docker run -d --name react-chat-bot-api -p 3001:3001 --env-file .env -e DATABASE_URL=postgresql://chatbot:chatbot@host.docker.internal:5432/chatbot react-chat-bot-api",
+    "api:down": "docker rm -f react-chat-bot-api",
+    "api:logs": "docker logs -f react-chat-bot-api"
+  }
+}

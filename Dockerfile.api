@@ -1,0 +1,22 @@
+# Отдельный образ API (не часть docker-compose).
+# Сборка из корня репозитория:
+#   docker build -f Dockerfile.api -t react-chat-bot-api ./server
+# Запуск (Postgres уже поднят через docker compose, порт 5432):
+#   docker run --rm -p 3001:3001 --env-file .env ^
+#     -e DATABASE_URL=postgresql://chatbot:chatbot@host.docker.internal:5432/chatbot ^
+#     --name react-chat-bot-api react-chat-bot-api
+
+FROM node:24-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev 2>/dev/null || npm install --omit=dev
+
+COPY db ./db
+COPY src ./src
+
+ENV NODE_ENV=production
+EXPOSE 3001
+
+CMD ["node", "src/index.js"]

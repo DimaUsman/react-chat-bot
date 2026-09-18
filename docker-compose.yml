@@ -1,0 +1,25 @@
+# Только PostgreSQL для локальной разработки (Docker Desktop).
+# API — отдельный файл Dockerfile.api (не этот compose).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: react-chat-bot-db
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chatbot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatbot}
+      POSTGRES_DB: ${POSTGRES_DB:-chatbot}
+    volumes:
+      - chatbot_pg_data:/var/lib/postgresql/data
+      - ./server/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chatbot} -d ${POSTGRES_DB:-chatbot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  chatbot_pg_data:
