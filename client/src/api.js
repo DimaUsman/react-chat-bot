@@ -12,17 +12,23 @@ export function clearVisitorId() {
   localStorage.removeItem(VISITOR_KEY);
 }
 
-async function request(path, options = {}) {
-  const res = await fetch(`/api${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options,
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || res.statusText);
-  return data;
+function joinUrl(base, path) {
+  const root = (base || '').replace(/\/$/, '');
+  const suffix = path.startsWith('/') ? path : `/${path}`;
+  return `${root}${suffix}`;
 }
 
-export function createApi(context) {
+export function createApi(context, apiBase = '') {
+  const request = async (path, options = {}) => {
+    const res = await fetch(joinUrl(apiBase, `/api${path}`), {
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+      ...options,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    return data;
+  };
+
   const base = () => ({
     visitorId: getVisitorId(),
     login: context.login || null,
@@ -47,13 +53,19 @@ export function createApi(context) {
     sendMessage(id, text, sender = 'user') {
       return request(`/conversations/${id}/messages`, {
         method: 'POST',
-        body: JSON.stringify({ text, sender }),
+        body: JSON.stringify({ ...base(), text, sender }),
       });
     },
     openTicket(text) {
       return request('/support/tickets', {
         method: 'POST',
         body: JSON.stringify({ ...base(), text }),
+      });
+    },
+    reports() {
+      return request('/reports', {
+        method: 'POST',
+        body: JSON.stringify(base()),
       });
     },
     closeTicket(id) {

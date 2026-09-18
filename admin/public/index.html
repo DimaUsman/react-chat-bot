@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BI Admin</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <p class="kicker">Luxms BI</p>
+        <h1>Управление доступом</h1>
+      </div>
+      <form method="post" action="/logout">
+        <button type="submit" class="ghost">Выйти</button>
+      </form>
+    </header>
+
+    <nav class="tabs">
+      <button type="button" data-tab="users" class="is-active">Пользователи</button>
+      <button type="button" data-tab="groups">Группы</button>
+      <button type="button" data-tab="reports">Отчёты</button>
+    </nav>
+
+    <main>
+      <section id="tab-users" class="tab is-active">
+        <div class="grid-2">
+          <form id="user-form" class="card">
+            <div class="card-head">
+              <h2 id="user-form-title">Новый пользователь</h2>
+              <button type="button" class="ghost" id="user-form-reset">Сбросить</button>
+            </div>
+            <input type="hidden" name="id" />
+            <label>Логин <input name="login" required /></label>
+            <label>ФИО <input name="fullname" /></label>
+            <label>Имя <input name="firstname" /></label>
+            <label>
+              Роль
+              <select name="role">
+                <option value="user">user</option>
+                <option value="support">support</option>
+                <option value="admin">admin</option>
+              </select>
+            </label>
+            <fieldset>
+              <legend>Группы пользователя</legend>
+              <div id="user-groups" class="checks"></div>
+            </fieldset>
+            <button type="submit" id="user-form-submit">Создать пользователя</button>
+          </form>
+          <div class="card">
+            <h2>Список</h2>
+            <div id="users-list" class="list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-groups" class="tab">
+        <div class="grid-2">
+          <form id="group-form" class="card">
+            <div class="card-head">
+              <h2 id="group-form-title">Новая группа</h2>
+              <button type="button" class="ghost" id="group-form-reset">Сбросить</button>
+            </div>
+            <input type="hidden" name="id" />
+            <label>Название <input name="name" required /></label>
+            <label>Описание <input name="description" /></label>
+            <fieldset>
+              <legend>Пользователи группы</legend>
+              <div id="group-users" class="checks"></div>
+            </fieldset>
+            <fieldset>
+              <legend>Права на отчёты</legend>
+              <div id="group-reports" class="checks"></div>
+            </fieldset>
+            <button type="submit" id="group-form-submit">Создать группу</button>
+          </form>
+          <div class="card">
+            <h2>Список групп</h2>
+            <div id="groups-list" class="list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-reports" class="tab">
+        <div class="grid-2">
+          <form id="report-form" class="card" enctype="multipart/form-data">
+            <h2>Добавить отчёт</h2>
+            <label>Название <input name="name" required /></label>
+            <label>Код / ds number <input name="code" /></label>
+            <label>Описание <textarea name="description" rows="3"></textarea></label>
+            <label>Источник данных <input name="dataSource" /></label>
+            <label>Страницы (по одной на строку) <textarea name="pages" rows="4" placeholder="Дашборд&#10;Детализация&#10;Сводка"></textarea></label>
+            <label>Картинки (можно несколько) <input name="images" type="file" accept="image/*" multiple /></label>
+            <button type="submit">Создать отчёт</button>
+          </form>
+          <div class="card">
+            <h2>Каталог отчётов</h2>
+            <div id="reports-list" class="list"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <p id="flash" class="flash" hidden></p>
+    <script src="/app.js"></script>
+  </body>
+</html>

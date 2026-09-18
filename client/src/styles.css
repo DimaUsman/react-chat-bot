@@ -120,8 +120,8 @@ code {
   bottom: 1.25rem;
   left: auto;
   z-index: 40;
-  width: 3.2rem;
-  height: 3.2rem;
+  width: 3.4rem;
+  height: 3.4rem;
   border-radius: 999px;
   border: none;
   background: var(--ink);
@@ -130,6 +130,8 @@ code {
   font-weight: 600;
   cursor: pointer;
   box-shadow: var(--shadow);
+  display: grid;
+  place-items: center;
   transition: transform 200ms ease, background 200ms ease, color 200ms ease;
 }
 
@@ -140,6 +142,17 @@ code {
 .chat-fab.is-open {
   background: var(--gold);
   color: var(--ink);
+}
+
+.chat-fab__icon {
+  width: 1.55rem;
+  height: 1.55rem;
+  display: block;
+}
+
+.chat-fab__close {
+  font-size: 1.6rem;
+  line-height: 1;
 }
 
 .chat-toast {
@@ -155,7 +168,7 @@ code {
   gap: 0.65rem;
   border: none;
   text-align: left;
-  padding: 0.95rem 1.15rem;
+  padding: 0.85rem 1.05rem;
   background: var(--ink);
   color: #f4efe7;
   font: inherit;
@@ -166,15 +179,14 @@ code {
   animation: toast-in 380ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.chat-toast__dot {
-  width: 0.55rem;
-  height: 0.55rem;
-  margin-top: 0.35rem;
+.chat-toast__avatar {
+  width: 1.7rem;
+  height: 1.7rem;
   border-radius: 50%;
-  background: var(--gold);
+  object-fit: cover;
   flex-shrink: 0;
-  box-shadow: 0 0 0 4px var(--gold-glow);
-  animation: pulse 1.6s ease infinite;
+  background: #fff;
+  border: 1px solid rgba(156, 143, 129, 0.5);
 }
 
 @keyframes toast-in {
@@ -245,7 +257,22 @@ code {
 .chat-brand {
   font-family: "Source Serif 4", Georgia, serif;
   color: var(--gold-soft);
-  font-size: 1.15rem;
+  font-size: 1.05rem;
+}
+
+.chat-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chat-brand-avatar {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+  border: 1px solid rgba(156, 143, 129, 0.45);
 }
 
 .chat-panel__sub {
@@ -348,8 +375,52 @@ code {
   border-top: 1px dashed rgba(156, 143, 129, 0.3);
 }
 
+.bubble-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.45rem;
+  max-width: 100%;
+}
+
+.bubble-row--user {
+  justify-content: flex-end;
+}
+
+.bubble-row--bot,
+.bubble-row--support {
+  justify-content: flex-start;
+}
+
+.bubble-avatar {
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.bubble-avatar--bot {
+  object-fit: cover;
+  background: #fff;
+  border: 1px solid rgba(156, 143, 129, 0.45);
+}
+
+.bubble-avatar--user {
+  background: rgba(156, 143, 129, 0.35);
+  color: #f3efe8;
+  border: 1px solid rgba(156, 143, 129, 0.55);
+}
+
+.bubble-avatar--support {
+  background: rgba(61, 107, 90, 0.45);
+  color: #e8f5ef;
+  border: 1px solid rgba(61, 107, 90, 0.7);
+}
+
 .bubble {
-  max-width: 92%;
+  max-width: calc(92% - 2rem);
   padding: 0.7rem 0.85rem;
   animation: bubble-in 280ms ease;
   line-height: 1.4;
@@ -551,6 +622,52 @@ code {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+}
+
+.report-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(156, 143, 129, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  animation: bubble-in 280ms ease;
+}
+
+.report-card h3 {
+  margin: 0;
+  font-family: "Source Serif 4", Georgia, serif;
+  color: var(--gold-soft);
+  font-size: 1.15rem;
+}
+
+.report-card p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.report-card__gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.4rem;
+}
+
+.report-card__image {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.report-card__pages {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.report-card__pages li {
+  margin: 0.15rem 0;
 }
 
 @media (max-width: 800px) {

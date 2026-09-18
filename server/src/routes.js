@@ -12,6 +12,11 @@ import {
   listUserSupportHistory,
   listSupportInbox,
 } from './services.js';
+import {
+  notifyPachcaSupport,
+  buildSupportNotifyPayload,
+} from './pachca.js';
+import { listReportsForLogin } from './reports.js';
 
 const router = Router();
 
@@ -28,6 +33,29 @@ function sessionFromBody(body = {}) {
 
 router.get('/health', (_req, res) => {
   res.json({ ok: true });
+});
+
+router.post('/reports', async (req, res, next) => {
+  try {
+    const login = req.body.login || null;
+    const items = await listReportsForLogin(login);
+    const base = process.env.ADMIN_PUBLIC_URL || 'http://localhost:3002';
+    res.json({
+      items: items.map((item) => ({
+        ...item,
+        imageUrls: (item.imagePaths || []).map((p) =>
+          p?.startsWith('http') ? p : `${base}${p}`,
+        ),
+        imageUrl: item.imagePaths?.[0]
+          ? item.imagePaths[0].startsWith('http')
+            ? item.imagePaths[0]
+            : `${base}${item.imagePaths[0]}`
+          : null,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.post('/session', async (req, res, next) => {
@@ -96,6 +124,26 @@ router.post('/conversations/:id/messages', async (req, res, next) => {
     }
 
     const message = await addMessage(conversation.id, sender, text.trim());
+
+    if (sender === 'user' && conversation.kind === 'support') {
+      const input = sessionFromBody(req.body);
+      void notifyPachcaSupport(
+        buildSupportNotifyPayload({
+          user: null,
+          input: {
+            ...input,
+            visitorId: conversation.visitor_id,
+            dsNumber: conversation.ds_number || input.dsNumber,
+            dsName: conversation.ds_name || input.dsName,
+            login: input.login,
+          },
+          text: text.trim(),
+          conversationId: conversation.id,
+          isNew: false,
+        }),
+      );
+    }
+
     res.status(201).json({ message });
   } catch (err) {
     next(err);
@@ -115,6 +163,15 @@ router.post('/support/tickets', async (req, res, next) => {
     });
     if (existing) {
       const message = await addMessage(existing.id, 'user', text);
+      void notifyPachcaSupport(
+        buildSupportNotifyPayload({
+          user,
+          input: { ...input, visitorId: visitor.id },
+          text,
+          conversationId: existing.id,
+          isNew: false,
+        }),
+      );
       return res.json({ conversation: existing, message, reused: true });
     }
 
@@ -125,6 +182,15 @@ router.post('/support/tickets', async (req, res, next) => {
       dsName: input.dsName,
       firstMessage: text,
     });
+    void notifyPachcaSupport(
+      buildSupportNotifyPayload({
+        user,
+        input: { ...input, visitorId: visitor.id },
+        text,
+        conversationId: created.conversation.id,
+        isNew: true,
+      }),
+    );
     res.status(201).json({ ...created, reused: false });
   } catch (err) {
     next(err);

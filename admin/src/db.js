@@ -6,10 +6,6 @@ import { config, assertSafeSchemaName } from './config.js';
 
 const { Pool } = pg;
 
-function quoteIdent(name) {
-  return `"${name.replace(/"/g, '""')}"`;
-}
-
 const schema = assertSafeSchemaName(config.databaseSchema);
 
 export const pool = new Pool({
@@ -19,9 +15,19 @@ export const pool = new Pool({
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+function resolveSchemaPath() {
+  const candidates = [
+    path.join(__dirname, '../db/schema.sql'),
+    path.join(__dirname, '../../server/db/schema.sql'),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  throw new Error('schema.sql not found');
+}
+
 export async function migrate() {
-  const sqlPath = path.join(__dirname, '../db/schema.sql');
-  const template = fs.readFileSync(sqlPath, 'utf8');
+  const template = fs.readFileSync(resolveSchemaPath(), 'utf8');
   const sql = template.replaceAll('{{SCHEMA}}', schema);
   await pool.query(sql);
   console.log(`[db] schema ready: ${schema}`);
@@ -30,5 +36,3 @@ export async function migrate() {
 export async function query(text, params) {
   return pool.query(text, params);
 }
-
-export { quoteIdent };

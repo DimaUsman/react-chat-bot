@@ -17,18 +17,15 @@ export function assertSafeSchemaName(name) {
 }
 
 export const config = {
-  port: Number(process.env.PORT || 3001),
+  port: Number(process.env.ADMIN_PORT || 3002),
   databaseUrl:
     process.env.DATABASE_URL ||
     'postgresql://chatbot:chatbot@localhost:5432/chatbot',
   databaseSchema: assertSafeSchemaName(
     process.env.DATABASE_SCHEMA || 'dataoffice_chat_bot',
   ),
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-  visitorTtlDays: Number(process.env.VISITOR_TTL_DAYS || 14),
-  supportLogins: (process.env.SUPPORT_LOGINS || 'support,admin')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean),
-  pachcaWebhookUrl: process.env.PACHCA_WEBHOOK_URL || '',
+  adminLogin: process.env.ADMIN_LOGIN || 'admin',
+  adminPassword: process.env.ADMIN_PASSWORD || 'admin',
+  sessionSecret: process.env.ADMIN_SESSION_SECRET || 'change-me-admin-secret',
+  publicUrl: process.env.ADMIN_PUBLIC_URL || 'http://localhost:3002',
 };

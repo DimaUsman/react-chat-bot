@@ -1,72 +1,70 @@
 # react-chat-bot
 
-Встраиваемый чат поддержки для BI web-сервиса (React + Express + PostgreSQL).
+Встраиваемый чат **КОРОБКО-КОТ** + API + админ-панель доступа к отчётам (React + Express + PostgreSQL).
 
-## Куда указать креды PostgreSQL
+## Куда указать креды
 
-1. Скопируйте пример:
-   ```bash
-   copy .env.example .env
-   ```
-2. Откройте **корневой** файл `.env` и задайте:
+1. `copy .env.example .env`
+2. Корневой `.env`:
 
 | Переменная | Для чего |
 |------------|----------|
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` / `POSTGRES_PORT` | `docker-compose.yml` (только БД) |
-| `DATABASE_URL` | API на хосте: `...@localhost:5432/...` |
-| `PORT` / `CORS_ORIGIN` / `SUPPORT_LOGINS` | API |
-
-Файл `.env` в git не попадает.
+| `POSTGRES_*` | Docker Postgres |
+| `DATABASE_URL` | API/Admin на хосте |
+| `DATABASE_SCHEMA` | схема Postgres (по умолчанию `dataoffice_chat_bot`, не `public`) |
+| `PACHCA_WEBHOOK_URL` | уведомления в Пачку |
+| `ADMIN_LOGIN` / `ADMIN_PASSWORD` | вход в админку |
+| `ADMIN_PUBLIC_URL` | URL админки для картинок отчётов в чате |
 
 ## Быстрый старт
 
 ```bash
 copy .env.example .env
-
-# 1) Postgres (compose)
 npm run db:up
 
-# 2) API — отдельный Dockerfile.api
-npm run api:build
-npm run api:up
+npm run api:build && npm run api:up
+npm run admin:build && npm run admin:up
 
-# 3) UI
 npm run install:all
 npm run dev:client
 ```
 
-- UI: http://localhost:5173  
+- Чат: http://localhost:5173  
 - API: http://localhost:3001/api/health  
+- Админка: http://localhost:3002 (логин/пароль из `.env`, по умолчанию `admin` / `admin`)
 
-### Ручной запуск API-контейнера
+## Деплой
 
-```bash
-docker build -f Dockerfile.api -t react-chat-bot-api ./server
+Пошагово: [docs/DEPLOY.md](docs/DEPLOY.md) — Docker API/Admin на app-сервере, Postgres на отдельном, встраивание `<ChatWidget />` в систему отчётов.
 
-docker run -d --name react-chat-bot-api -p 3001:3001 --env-file .env ^
-  -e DATABASE_URL=postgresql://chatbot:chatbot@host.docker.internal:5432/chatbot ^
-  react-chat-bot-api
-```
+- В `.env`: `DATABASE_SCHEMA=dataoffice_chat_bot` (любое безопасное имя)
+- Шаблон миграций: `server/db/schema.sql` (`{{SCHEMA}}` подставляется при старте)
+- Быстро воссоздать вручную (DBeaver/psql): `server/db/recreate_schema.sql`
 
-`host.docker.internal` нужен, чтобы контейнер API достучался до Postgres на порту хоста.
+| Файл | Сервис |
+|------|--------|
+| `docker-compose.yml` | только Postgres |
+| `Dockerfile.api` | API чата |
+| `Dockerfile.admin` | веб-сервис пользователей/групп/отчётов |
 
-| Команда | Что делает |
-|---------|------------|
-| `npm run db:up` | только Postgres (compose) |
-| `npm run api:build` / `api:up` | сборка и запуск из `Dockerfile.api` |
-| `npm run dev:server` | API на хосте без Docker |
+## Админка
 
-## Память
+- Пользователи и роли
+- Группы
+- Таблица **user_groups** — наличие у пользователя группы
+- Таблица **group_report_access** — права группы на отчёт
+- Отчёты: картинка, описание, источник данных, список страниц
 
-Гибрид: `visitorId` в `localStorage` + PostgreSQL. См. [docs/MEMORY.md](docs/MEMORY.md).
+В чате остаётся только **просмотр** отчётов, к которым есть доступ через группы.
 
 ## Структура
 
 ```
-docker-compose.yml   # только Postgres
-Dockerfile.api       # отдельный образ API
-.env.example
-server/
-client/
+Dockerfile.api
+Dockerfile.admin
+docker-compose.yml
+client/          # виджет КОРОБКО-КОТ
+server/          # API чата
+admin/           # админ-панель
 docs/
 ```

@@ -1,0 +1,26 @@
+# Отдельный образ админ-панели.
+# Сборка из корня репозитория:
+#   docker build -f Dockerfile.admin -t react-chat-bot-admin .
+# Запуск:
+#   docker run -d --name react-chat-bot-admin -p 3002:3002 --env-file .env ^
+#     -e DATABASE_URL=postgresql://chatbot:chatbot@host.docker.internal:5432/chatbot ^
+#     -v "%cd%/admin/uploads:/app/uploads" ^
+#     react-chat-bot-admin
+
+FROM node:24-alpine
+
+WORKDIR /app
+
+COPY admin/package.json admin/package-lock.json* ./
+RUN npm ci --omit=dev 2>/dev/null || npm install --omit=dev
+
+COPY admin/src ./src
+COPY admin/public ./public
+COPY server/db/schema.sql ./db/schema.sql
+COPY server/db/recreate_schema.sql ./db/recreate_schema.sql
+RUN mkdir -p uploads
+
+ENV NODE_ENV=production
+EXPOSE 3002
+
+CMD ["node", "src/index.js"]

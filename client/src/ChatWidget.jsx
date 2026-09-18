@@ -2,8 +2,26 @@ import { useEffect, useRef, useState } from 'react';
 import { createApi } from './api.js';
 import { useBotEngine } from './bot/useBotEngine.js';
 
-export default function ChatWidget({ context, onSupportMode }) {
-  const api = createApi(context);
+const BOT_NAME = 'КОРОБКО-КОТ';
+const DEFAULT_BOT_AVATAR = '/korobko-kot.jpg';
+
+/**
+ * Embeddable chat widget.
+ *
+ * @param {object} props
+ * @param {object} props.context — { login, fullname, firstname, dsNumber, dsName, actingAsSupport? }
+ * @param {string} [props.apiBase] — origin API, e.g. https://chat-api.example.com (пусто = same origin /proxy)
+ * @param {string} [props.avatarUrl] — URL аватара КОРОБКО-КОТ
+ * @param {(v:boolean)=>void} [props.onSupportMode]
+ */
+export default function ChatWidget({
+  context,
+  onSupportMode,
+  apiBase = '',
+  avatarUrl = DEFAULT_BOT_AVATAR,
+}) {
+  const api = createApi(context, apiBase);
+  const BOT_AVATAR = avatarUrl;
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState(null);
   const [ready, setReady] = useState(false);
@@ -15,6 +33,8 @@ export default function ChatWidget({ context, onSupportMode }) {
   const [messages, setMessages] = useState([]);
   const [conversation, setConversation] = useState(null);
   const [listItems, setListItems] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [activeReport, setActiveReport] = useState(null);
 
   const toastTimer = useRef(null);
   const pollRef = useRef(null);
@@ -55,7 +75,7 @@ export default function ChatWidget({ context, onSupportMode }) {
   useEffect(() => {
     const el = scrollerRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [bot.timeline, bot.typing, messages, listItems, open]);
+  }, [bot.timeline, bot.typing, messages, listItems, reports, activeReport, open]);
 
   const mode = bot.step?.mode;
 
@@ -99,6 +119,13 @@ export default function ChatWidget({ context, onSupportMode }) {
         onSupportMode?.(true);
         const data = await api.inbox('closed');
         setListItems(data.items);
+        bot.go(choice.next, { userLabel: choice.label });
+        return;
+      }
+      if (choice.action === 'load_reports') {
+        setBusy(true);
+        const data = await api.reports();
+        setReports(data.items || []);
         bot.go(choice.next, { userLabel: choice.label });
         return;
       }
@@ -216,6 +243,12 @@ export default function ChatWidget({ context, onSupportMode }) {
     }
   }
 
+  function pickReport(report) {
+    bot.pushUser(report.name);
+    setActiveReport(report);
+    bot.go('report_view');
+  }
+
   const showChoices =
     bot.step?.choices?.length > 0 &&
     !bot.typing &&
@@ -228,6 +261,8 @@ export default function ChatWidget({ context, onSupportMode }) {
     mode === 'history_list' ||
     mode === 'support_inbox' ||
     mode === 'support_history_list';
+  const showReports = mode === 'reports_list';
+  const showReportView = mode === 'report_view';
 
   return (
     <>
@@ -240,7 +275,7 @@ export default function ChatWidget({ context, onSupportMode }) {
             setOpen(true);
           }}
         >
-          <span className="chat-toast__dot" />
+          <img src={BOT_AVATAR} alt="" className="chat-toast__avatar" />
           {toast}
         </button>
       )}
@@ -254,11 +289,15 @@ export default function ChatWidget({ context, onSupportMode }) {
           setToast(null);
         }}
       >
-        {open ? '×' : '?'}
+        {open ? (
+          <span className="chat-fab__close">×</span>
+        ) : (
+          <MessageCloudIcon />
+        )}
       </button>
 
       {open && (
-        <section className="chat-panel" aria-label="Чат-бот поддержки">
+        <section className="chat-panel" aria-label="Чат КОРОБКО-КОТ">
           <header className="chat-panel__header">
             <div className="chat-panel__titles">
               {bot.canBack ? (
@@ -266,10 +305,13 @@ export default function ChatWidget({ context, onSupportMode }) {
                   ← Назад
                 </button>
               ) : (
-                <span className="chat-brand">BI Support</span>
+                <div className="chat-brand-row">
+                  <img src={BOT_AVATAR} alt="" className="chat-brand-avatar" />
+                  <span className="chat-brand">{BOT_NAME}</span>
+                </div>
               )}
               <span className="chat-panel__sub">
-                {session?.menu?.isSupport ? 'Режим поддержки' : 'Чат-бот'}
+                {session?.menu?.isSupport ? 'Режим поддержки' : 'Помощник BI'}
               </span>
             </div>
             <button type="button" className="chat-close" onClick={() => setOpen(false)}>
@@ -282,9 +324,9 @@ export default function ChatWidget({ context, onSupportMode }) {
 
             <div className="chat-timeline">
               {bot.timeline.map((m) => (
-                <Bubble key={m.id} role={m.role} text={m.text} />
+                <Bubble key={m.id} role={m.role} text={m.text} avatarUrl={BOT_AVATAR} />
               ))}
-              {bot.typing && <TypingIndicator />}
+              {bot.typing && <TypingIndicator avatarUrl={BOT_AVATAR} />}
             </div>
 
             {showChoices && (
@@ -338,6 +380,30 @@ export default function ChatWidget({ context, onSupportMode }) {
               </div>
             )}
 
+            {showReports && (
+              <div className="chat-choices">
+                {reports.length === 0 && (
+                  <p className="chat-muted">Нет доступных отчётов</p>
+                )}
+                {reports.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    className="chat-choice"
+                    disabled={busy}
+                    onClick={() => pickReport(r)}
+                  >
+                    <strong>{r.name}</strong>
+                    {r.code && <span>Код: {r.code}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {showReportView && activeReport && (
+              <ReportCard report={activeReport} />
+            )}
+
             {(showLiveChat || showHistoryView) && (
               <div className="chat-live">
                 <div className="chat-timeline chat-timeline--live">
@@ -347,6 +413,7 @@ export default function ChatWidget({ context, onSupportMode }) {
                       role={m.sender === 'support' ? 'support' : m.sender === 'bot' ? 'bot' : 'user'}
                       text={m.text}
                       meta={liveMeta(m.sender, context.actingAsSupport)}
+                      avatarUrl={BOT_AVATAR}
                     />
                   ))}
                 </div>
@@ -387,25 +454,77 @@ export default function ChatWidget({ context, onSupportMode }) {
   );
 }
 
-function Bubble({ role, text, meta }) {
+function MessageCloudIcon() {
   return (
-    <div className={`bubble bubble--${role}`}>
-      {(meta || role === 'bot' || role === 'support') && (
-        <span className="bubble__meta">
-          {meta || (role === 'bot' ? 'Бот' : role === 'support' ? 'Поддержка' : '')}
-        </span>
-      )}
-      <p>{text}</p>
+    <svg className="chat-fab__icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4.5 3.4c-.7.5-1.5 0-1.5-.8V6a2 2 0 0 1 2-2Zm2 4v2h12V8H6Zm0 4v2h8v-2H6Z"
+      />
+    </svg>
+  );
+}
+
+function Avatar({ role, avatarUrl = DEFAULT_BOT_AVATAR }) {
+  if (role === 'bot') {
+    return <img src={avatarUrl} alt="" className="bubble-avatar bubble-avatar--bot" />;
+  }
+  if (role === 'support') {
+    return (
+      <span className="bubble-avatar bubble-avatar--support" aria-hidden="true">
+        <HeadsetIcon />
+      </span>
+    );
+  }
+  return (
+    <span className="bubble-avatar bubble-avatar--user" aria-hidden="true">
+      <UserIcon />
+    </span>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+      <path d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2c-4 0-7.5 2-7.5 4.5V20h15v-1.5C19.5 16 16 14 12 14Z" />
+    </svg>
+  );
+}
+
+function HeadsetIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+      <path d="M12 3a8 8 0 0 0-8 8v5a3 3 0 0 0 3 3h1v-6H6v-2a6 6 0 1 1 12 0v2h-2v6h1a3 3 0 0 0 3-3v-5a8 8 0 0 0-8-8Z" />
+    </svg>
+  );
+}
+
+function Bubble({ role, text, meta, avatarUrl }) {
+  const label =
+    meta ||
+    (role === 'bot' ? BOT_NAME : role === 'support' ? 'Поддержка' : 'Вы');
+
+  return (
+    <div className={`bubble-row bubble-row--${role}`}>
+      {role !== 'user' && <Avatar role={role} avatarUrl={avatarUrl} />}
+      <div className={`bubble bubble--${role}`}>
+        <span className="bubble__meta">{label}</span>
+        <p>{text}</p>
+      </div>
+      {role === 'user' && <Avatar role="user" />}
     </div>
   );
 }
 
-function TypingIndicator() {
+function TypingIndicator({ avatarUrl }) {
   return (
-    <div className="bubble bubble--bot bubble--typing" aria-label="Бот печатает">
-      <span />
-      <span />
-      <span />
+    <div className="bubble-row bubble-row--bot">
+      <Avatar role="bot" avatarUrl={avatarUrl} />
+      <div className="bubble bubble--bot bubble--typing" aria-label={`${BOT_NAME} печатает`}>
+        <span />
+        <span />
+        <span />
+      </div>
     </div>
   );
 }
@@ -432,8 +551,47 @@ function Composer({ draft, setDraft, onSubmit, placeholder, disabled }) {
   );
 }
 
+function ReportCard({ report }) {
+  const pages = Array.isArray(report.pages) ? report.pages : [];
+  const imageUrls = report.imageUrls?.length
+    ? report.imageUrls
+    : report.imageUrl
+      ? [report.imageUrl]
+      : [];
+
+  return (
+    <article className="report-card">
+      {imageUrls.length > 0 && (
+        <div className="report-card__gallery">
+          {imageUrls.map((url) => (
+            <img key={url} src={url} alt="" className="report-card__image" />
+          ))}
+        </div>
+      )}
+      <h3>{report.name}</h3>
+      {report.code && <p className="chat-muted">Код: {report.code}</p>}
+      {report.description && <p>{report.description}</p>}
+      {report.dataSource || report.data_source ? (
+        <p>
+          <strong>Источник:</strong> {report.dataSource || report.data_source}
+        </p>
+      ) : null}
+      {pages.length > 0 && (
+        <div>
+          <strong>Страницы:</strong>
+          <ul className="report-card__pages">
+            {pages.map((page) => (
+              <li key={page}>{page}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </article>
+  );
+}
+
 function liveMeta(sender, actingAsSupport) {
   if (sender === 'support') return actingAsSupport ? 'Вы' : 'Поддержка';
-  if (sender === 'bot') return 'Бот';
+  if (sender === 'bot') return BOT_NAME;
   return actingAsSupport ? 'Пользователь' : 'Вы';
 }

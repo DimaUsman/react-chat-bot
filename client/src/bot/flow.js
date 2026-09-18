@@ -1,6 +1,5 @@
 /**
- * Typebot-like flow for BI support chatbot.
- * Each step: bot messages + optional choices / input / action.
+ * Typebot-like flow for КОРОБКО-КОТ (BI support chatbot).
  */
 
 export function buildFlow({ session, context }) {
@@ -13,7 +12,7 @@ export function buildFlow({ session, context }) {
   const dsLabel = context.dsName || context.dsNumber;
 
   if (isSupport) {
-    return supportFlow({ user, inboxHint: true });
+    return supportFlow({ user });
   }
 
   return userFlow({ name, canReports, hasOpenSupport, dsLabel, context });
@@ -26,7 +25,8 @@ function userFlow({ name, canReports, hasOpenSupport, dsLabel, context }) {
     rootChoices.push({
       id: 'reports',
       label: 'Посмотреть отчёты',
-      next: 'reports',
+      next: 'reports_list',
+      action: 'load_reports',
     });
   }
 
@@ -53,7 +53,7 @@ function userFlow({ name, canReports, hasOpenSupport, dsLabel, context }) {
   });
 
   const greeting = context.login
-    ? `Здравствуйте, ${name}! Я бот поддержки BI. Чем помочь?`
+    ? `Здравствуйте, ${name}! Я КОРОБКО-КОТ — помощник по BI. Чем помочь?`
     : `Здравствуйте! Вы не авторизованы — я всё равно запомню диалог на несколько дней. Чем помочь?`;
 
   return {
@@ -66,23 +66,13 @@ function userFlow({ name, canReports, hasOpenSupport, dsLabel, context }) {
         ].filter(Boolean),
         choices: rootChoices,
       },
-      reports: {
-        messages: [
-          dsLabel
-            ? `Отчёт «${dsLabel}» (№ ${context.dsNumber || '—'}). Здесь позже появятся быстрые действия по отчёту.`
-            : 'Откройте отчёт в BI — я подхвачу его номер и название автоматически.',
-          'Можете вернуться назад или написать в поддержку.',
-        ],
-        choices: [
-          {
-            id: 'reports_to_support',
-            label: hasOpenSupport
-              ? 'Продолжить общение с поддержкой'
-              : 'Написать обращение в поддержку',
-            next: hasOpenSupport ? 'support_live' : 'support_compose',
-            action: hasOpenSupport ? 'open_support' : undefined,
-          },
-        ],
+      reports_list: {
+        messages: ['Отчёты, к которым у вас есть доступ:'],
+        mode: 'reports_list',
+      },
+      report_view: {
+        messages: ['Карточка отчёта:'],
+        mode: 'report_view',
       },
       support_compose: {
         messages: [
@@ -118,10 +108,9 @@ function supportFlow({ user }) {
       root: {
         messages: [
           `Кабинет поддержки · ${user?.fullname || user?.login || 'агент'}`,
-          'Выберите действие:',
+          'Управление отчётами — в админ-панели. Здесь только чаты.',
         ],
         choices: [
-          { id: 'new_report', label: 'Добавить новый отчёт', next: 'new_report' },
           {
             id: 'inbox',
             label: 'Текущие чаты',
@@ -135,13 +124,6 @@ function supportFlow({ user }) {
             action: 'load_support_history',
           },
         ],
-      },
-      new_report: {
-        messages: [
-          'Добавление отчёта — заглушка под интеграцию с BI.',
-          'Скоро здесь будет форма: название, источник данных, доступ.',
-        ],
-        choices: [],
       },
       inbox: {
         messages: ['Открытые обращения (неотвеченные отмечены):'],

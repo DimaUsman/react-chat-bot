@@ -6,13 +6,18 @@
     "dev": "npm run dev --prefix client",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
-    "install:all": "npm install --prefix server && npm install --prefix client",
+    "dev:admin": "npm run dev --prefix admin",
+    "install:all": "npm install --prefix server && npm install --prefix client && npm install --prefix admin",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
     "api:build": "docker build -f Dockerfile.api -t react-chat-bot-api ./server",
     "api:up": "docker rm -f react-chat-bot-api 2>nul & docker run -d --name react-chat-bot-api -p 3001:3001 --env-file .env -e DATABASE_URL=postgresql://chatbot:chatbot@host.docker.internal:5432/chatbot react-chat-bot-api",
     "api:down": "docker rm -f react-chat-bot-api",
-    "api:logs": "docker logs -f react-chat-bot-api"
+    "api:logs": "docker logs -f react-chat-bot-api",
+    "admin:build": "docker build -f Dockerfile.admin -t react-chat-bot-admin .",
+    "admin:up": "docker rm -f react-chat-bot-admin 2>nul & docker run -d --name react-chat-bot-admin -p 3002:3002 --env-file .env -e DATABASE_URL=postgresql://chatbot:chatbot@host.docker.internal:5432/chatbot -v \"%cd%/admin/uploads:/app/uploads\" react-chat-bot-admin",
+    "admin:down": "docker rm -f react-chat-bot-admin",
+    "admin:logs": "docker logs -f react-chat-bot-admin"
   }
 }
