@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createApi } from './api.js';
 import { useBotEngine } from './bot/useBotEngine.js';
 

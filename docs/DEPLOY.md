@@ -192,6 +192,8 @@ export function Root({ children, user, currentReport }) {
 
 Не импортируйте `App.jsx` / `main.jsx` из демо — только `ChatWidget` + `api.js` + `bot/` + `styles.css`.
 
+Если в консоли `React is not defined` — в webpack/Babel Luxms классический JSX-runtime: в `ChatWidget.jsx` уже есть `import React from 'react'`. Перекопируйте файл.
+
 ### Что передать в `context`
 
 | Поле | Смысл |

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ChatWidget from './ChatWidget.jsx';
 import './styles.css';
 
