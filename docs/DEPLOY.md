@@ -23,10 +23,26 @@
 
 ## 1. Postgres (другой сервер)
 
-1. Создайте БД и пользователя (или используйте существующие).
-2. Выполните `server/db/recreate_schema.sql` в DBeaver/psql  
-   (или дайте API создать схему при первом старте — он применит `schema.sql`).
-3. Проверьте доступ **с сервера приложений** до Postgres (порт 5432, firewall, `pg_hba.conf`).
+1. Создайте БД и пользователя приложения (или используйте существующие).
+2. **От владельца / DBA** выполните `server/db/recreate_schema.sql` (или `schema.sql`) —
+   создание схемы, таблиц, индексов. Учётка приложения для DDL **не нужна**.
+3. Выдайте приложению только DML:
+
+```sql
+GRANT USAGE ON SCHEMA dataoffice_chat_bot TO dataoffice_chat_bot_user;
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON ALL TABLES IN SCHEMA dataoffice_chat_bot TO dataoffice_chat_bot_user;
+GRANT USAGE, SELECT
+  ON ALL SEQUENCES IN SCHEMA dataoffice_chat_bot TO dataoffice_chat_bot_user;
+-- на случай новых таблиц от владельца:
+ALTER DEFAULT PRIVILEGES FOR ROLE <владелец_схемы> IN SCHEMA dataoffice_chat_bot
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO dataoffice_chat_bot_user;
+```
+
+API/Admin при старте **не** гоняют DDL, если таблицы уже есть.
+`FORCE_MIGRATE=1` — принудительно применить `schema.sql` (нужны права владельца).
+
+4. Проверьте доступ **с сервера приложений** до Postgres (порт 5432, firewall, `pg_hba.conf`).
 
 Строка подключения (пример):
 
