@@ -55,7 +55,8 @@ function resolveDatabaseUrl() {
 }
 
 export const config = {
-  port: Number(process.env.PORT || process.env.ADMIN_PORT || 3002),
+  // ADMIN_PORT важнее PORT: общий .env для API+admin содержит PORT=3001
+  port: Number(process.env.ADMIN_PORT || process.env.PORT || 3002),
   databaseUrl: resolveDatabaseUrl(),
   databaseSchema: assertSafeSchemaName(
     process.env.DATABASE_SCHEMA || 'dataoffice_chat_bot',
