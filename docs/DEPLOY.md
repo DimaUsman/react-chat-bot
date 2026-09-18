@@ -163,27 +163,24 @@ CORS_ORIGIN=https://reports.example.com
 
 Виджет — это `ChatWidget`. Его можно подключить как исходники из этого репозитория (или как git submodule / скопировать `client/src`).
 
-### Минимальный пример
+### Минимальный пример (Root / layout)
 
-```jsx
-import ChatWidget from 'react-chat-bot/client/src/ChatWidget.jsx';
-// или относительный путь:
-// import ChatWidget from '../../react-chat-bot/client/src/ChatWidget.jsx';
-import 'react-chat-bot/client/src/styles.css';
-// аватар положите в public/ хоста или укажите полный URL:
-import korobkoAvatar from './assets/korobko-kot.jpg';
+Важно: **не заменяйте** дерево приложения виджетом — добавьте рядом с `{children}` / существующим UI. Иначе останется только чат (или белый экран при ошибке).
 
-export function ReportsPage({ user, currentReport }) {
+```tsx
+import ChatWidget from './chat-bot/ChatWidget';
+import './chat-bot/styles.css';
+
+export function Root({ children, user, currentReport }) {
   return (
     <>
-      {/* ваша существующая страница */}
+      {children}
       <ChatWidget
         apiBase="https://chat-api.example.com"
-        avatarUrl={korobkoAvatar}
         context={{
-          login: user.login,
-          fullname: user.fullname,
-          firstname: user.firstname,
+          login: user?.login ?? '',
+          fullname: user?.fullname ?? '',
+          firstname: user?.firstname ?? '',
           dsNumber: currentReport?.id ?? '',
           dsName: currentReport?.title ?? '',
         }}
@@ -192,6 +189,8 @@ export function ReportsPage({ user, currentReport }) {
   );
 }
 ```
+
+Не импортируйте `App.jsx` / `main.jsx` из демо — только `ChatWidget` + `api.js` + `bot/` + `styles.css`.
 
 ### Что передать в `context`
 

@@ -34,8 +34,8 @@ export function useBotEngine({ session, context, ready }) {
     ready,
     session?.user?.login,
     session?.menu?.isSupport,
-    context.dsNumber,
-    context.firstname,
+    context?.dsNumber,
+    context?.firstname,
   ]);
 
   const step = flow && stepId ? flow.steps[stepId] : null;

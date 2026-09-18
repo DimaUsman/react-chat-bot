@@ -15,11 +15,12 @@ const DEFAULT_BOT_AVATAR = '/korobko-kot.jpg';
  * @param {(v:boolean)=>void} [props.onSupportMode]
  */
 export default function ChatWidget({
-  context,
+  context: contextProp,
   onSupportMode,
   apiBase = '',
   avatarUrl = DEFAULT_BOT_AVATAR,
 }) {
+  const context = contextProp || {};
   const api = createApi(context, apiBase);
   const BOT_AVATAR = avatarUrl;
   const [open, setOpen] = useState(false);
@@ -58,7 +59,11 @@ export default function ChatWidget({
         setReady(true);
         clearTimeout(toastTimer.current);
         const waitMs = (data.welcome?.waitingTimeSec ?? 120) * 1000;
-        const delay = import.meta.env.DEV ? Math.min(waitMs, 6000) : waitMs;
+        const isDev =
+          typeof import.meta !== 'undefined' &&
+          import.meta.env &&
+          import.meta.env.DEV;
+        const delay = isDev ? Math.min(waitMs, 6000) : waitMs;
         toastTimer.current = setTimeout(() => {
           setToast(data.welcome?.welcomeMsg);
         }, delay);
@@ -265,7 +270,7 @@ export default function ChatWidget({
   const showReportView = mode === 'report_view';
 
   return (
-    <>
+    <div className="chatbot-root">
       {toast && !open && (
         <button
           type="button"
@@ -449,7 +454,7 @@ export default function ChatWidget({
           </div>
         </section>
       )}
-    </>
+    </div>
   );
 }
 

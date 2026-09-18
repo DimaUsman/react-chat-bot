@@ -4,12 +4,14 @@
 
 export function buildFlow({ session, context }) {
   const user = session?.user;
-  const firstname = user?.firstname || context.firstname;
+  const firstname = user?.firstname || context?.firstname;
+
   const name = firstname || user?.fullname || user?.login || 'гость';
   const canReports = Boolean(session?.menu?.canViewReports);
   const hasOpenSupport = Boolean(session?.menu?.hasOpenSupport);
   const isSupport = Boolean(session?.menu?.isSupport);
-  const dsLabel = context.dsName || context.dsNumber;
+  const dsLabel = context?.dsName || context?.dsNumber;
+
 
   if (isSupport) {
     return supportFlow({ user });
@@ -52,7 +54,7 @@ function userFlow({ name, canReports, hasOpenSupport, dsLabel, context }) {
     action: 'load_history',
   });
 
-  const greeting = context.login
+  const greeting = context?.login
     ? `Здравствуйте, ${name}! Я КОРОБКО-КОТ — помощник по BI. Чем помочь?`
     : `Здравствуйте! Вы не авторизованы — я всё равно запомню диалог на несколько дней. Чем помочь?`;
 
