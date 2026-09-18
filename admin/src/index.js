@@ -2,7 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { config } from './config.js';
+import { config, describeDatabaseUrl } from './config.js';
 import { migrate, pool } from './db.js';
 import apiRoutes from './routes.js';
 import {
@@ -61,15 +61,19 @@ app.use((err, _req, res, _next) => {
 });
 
 async function start() {
+  console.log(`DB target: ${describeDatabaseUrl()}`);
   await migrate();
   app.listen(config.port, () => {
     console.log(`Admin http://localhost:${config.port}`);
-    console.log(`DB    ${config.databaseUrl.replace(/:[^:@/]+@/, ':***@')}`);
   });
 }
 
 start().catch(async (err) => {
   console.error('Failed to start admin:', err.message);
+  console.error(
+    'Check DATABASE_URL or POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_HOST/POSTGRES_DB in --env-file / -e',
+  );
+  console.error(`Resolved DB: ${describeDatabaseUrl()}`);
   await pool.end();
   process.exit(1);
 });

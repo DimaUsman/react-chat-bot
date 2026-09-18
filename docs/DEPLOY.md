@@ -39,12 +39,35 @@ DATABASE_SCHEMA=dataoffice_chat_bot
 
 ## 2. .env на сервере приложений
 
-Скопируйте `.env.example` → `.env` и заполните **прод**:
+Скопируйте `.env.example` → `.env` и заполните **прод**.
+
+Вариант A — одна строка:
 
 ```env
-DATABASE_URL=postgresql://USER:PASSWORD@PG_HOST:5432/DB_NAME
+DATABASE_URL=postgresql://real_user:real_password@PG_HOST:5432/DB_NAME
 DATABASE_SCHEMA=dataoffice_chat_bot
+```
 
+Вариант B — отдельные поля (если `DATABASE_URL` пустой или оставлен шаблоном из `.env.example`):
+
+```env
+POSTGRES_USER=real_user
+POSTGRES_PASSWORD=real_password
+POSTGRES_HOST=PG_HOST
+POSTGRES_PORT=5432
+POSTGRES_DB=DB_NAME
+DATABASE_SCHEMA=dataoffice_chat_bot
+```
+
+Важно:
+
+- Docker **не** подставляет `${POSTGRES_USER}` внутри `DATABASE_URL` — пишите готовые значения.
+- Файл `.env` в образ **не** копируется: контейнер видит только то, что передали через `--env-file` / `-e`.
+- Не оставляйте в `.env` строки вида `postgresql://USER:PASSWORD@PG_HOST:...` — это шаблон, не креды.
+
+Остальные переменные:
+
+```env
 PORT=3001
 # Origin вашей системы отчётов (можно несколько через запятую — см. ниже)
 CORS_ORIGIN=https://reports.example.com
@@ -59,6 +82,14 @@ ADMIN_PUBLIC_URL=https://chat-admin.example.com
 PACHCA_WEBHOOK_URL=https://api.pachca.com/webhooks/...
 SUPPORT_LOGINS=support,admin
 ```
+
+Если контейнер в статусе **Restarting** — смотрите логи:
+
+```bash
+docker logs --tail 50 react-chat-bot-api
+```
+
+В логе будет строка `DB target: postgresql://user:***@host:5432/db`. Если user = `(no user)` или host = `localhost` / `PG_HOST` — поправьте `.env` и пересоздайте контейнер с `--env-file .env`.
 
 ---
 
