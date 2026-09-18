@@ -17,7 +17,7 @@ export function assertSafeSchemaName(name) {
 }
 
 export const config = {
-  port: Number(process.env.ADMIN_PORT || 3002),
+  port: Number(process.env.PORT || process.env.ADMIN_PORT || 3002),
   databaseUrl:
     process.env.DATABASE_URL ||
     'postgresql://chatbot:chatbot@localhost:5432/chatbot',

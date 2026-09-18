@@ -1,11 +1,8 @@
 # Отдельный образ админ-панели.
-# Сборка из корня репозитория:
-#   docker build -f Dockerfile.admin -t react-chat-bot-admin .
-# Запуск:
-#   docker run -d --name react-chat-bot-admin -p 3002:3002 --env-file .env ^
-#     -e DATABASE_URL=postgresql://chatbot:chatbot@host.docker.internal:5432/chatbot ^
-#     -v "%cd%/admin/uploads:/app/uploads" ^
-#     react-chat-bot-admin
+# Сборка:  docker build -f Dockerfile.admin -t react-chat-bot-admin .
+# Запуск:  docker run -d --name react-chat-bot-admin -p ${ADMIN_PORT:-3002}:${ADMIN_PORT:-3002} --env-file .env -v ... react-chat-bot-admin
+#
+# Порт задаётся ADMIN_PORT (или PORT). Приоритет в приложении: PORT → ADMIN_PORT → 3002.
 
 FROM node:24-alpine
 
@@ -21,6 +18,9 @@ COPY server/db/recreate_schema.sql ./db/recreate_schema.sql
 RUN mkdir -p uploads
 
 ENV NODE_ENV=production
-EXPOSE 3002
+ENV ADMIN_PORT=3002
+ENV PORT=3002
+
+EXPOSE ${ADMIN_PORT}
 
 CMD ["node", "src/index.js"]
